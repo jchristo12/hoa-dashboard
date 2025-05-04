@@ -8,6 +8,8 @@ from utils import get_date_ranges, get_line_chart
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Expose server for production deployment
+server = app.server
 
 app.layout = dbc.Container([
     html.H2("SkyTerrace Towns HOA Dashboard"),
