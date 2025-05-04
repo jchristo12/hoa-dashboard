@@ -2,18 +2,20 @@ import dash
 from dash import html, Input, Output, State, dcc
 import dash_bootstrap_components as dbc
 import pandas as pd
+from dash import callback_context
 
 from data import START_DATE_DEFAULT, combined_df
-from utils import get_date_ranges, get_line_chart
+from utils import GEO, get_date_ranges, get_line_chart, get_tiles
 
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 # Expose server for production deployment
 server = app.server
 
+
 app.layout = dbc.Container([
-    html.H2("SkyTerrace Towns HOA Dashboard"),
-    html.H4("Property Value Trends"),
+    html.H2(f'{GEO.get('community')} HOA Dashboard'),
+    html.H4('Property Value Trends'),
     html.Div(
         dcc.RadioItems(
             id='mean-median-toggle',
@@ -23,28 +25,39 @@ app.layout = dbc.Container([
             ],
             value='avg',
             inline=True,
-            inputStyle={"marginRight": "6px", "marginLeft": "12px"},
-            labelStyle={"marginRight": "18px"},
-            style={"marginBottom": "10px"}
+            inputStyle={'marginRight': '6px', 'marginLeft': '12px'},
+            labelStyle={'marginRight': '18px'},
+            style={'marginBottom': '10px'}
         ),
-        style={"display": "flex", "justifyContent": "center", "marginBottom": "10px"}
+        style={'display': 'flex', 'justifyContent': 'left', 'marginBottom': '10px'}
     ),
+    html.Div(id='data-tiles'),  # Tiles will be rendered here
     html.Div(
         dbc.ButtonGroup([
-            dbc.Button("3M", id="btn-3M", n_clicks=0),
-            dbc.Button("6M", id="btn-6M", n_clicks=0),
-            dbc.Button("1Y", id="btn-1Y", n_clicks=0),
-            dbc.Button("3Y", id="btn-3Y", n_clicks=0),
-            dbc.Button("ALL", id="btn-ALL", n_clicks=0),
-        ], className="mb-3", id="date-range-buttons"),
-        style={"display": "flex", "justifyContent": "center", "marginBottom": "10px"}
+            dbc.Button('3M', id='btn-3M', n_clicks=0),
+            dbc.Button('6M', id='btn-6M', n_clicks=0),
+            dbc.Button('1Y', id='btn-1Y', n_clicks=0),
+            dbc.Button('3Y', id='btn-3Y', n_clicks=0),
+            dbc.Button('ALL', id='btn-ALL', n_clicks=0),
+        ], className='mb-3', id='date-range-buttons'),
+        style={'display': 'flex', 'justifyContent': 'center', 'marginBottom': '10px'}
     ),
     html.Div(id='trend-chart'),
     html.Div(
-        "Note: All values are indexed to 100 as of August 1, 2021 representing changes in average home values over time.",
-        style={"fontSize": "0.9em", "color": "#888", "marginTop": "10px"}
+        'Note: All values are indexed to 100 as of August 1, 2021 representing changes in average home values over time.',
+        style={'fontSize': '0.9em', 'color': '#888', 'marginTop': '1px'}
     ),
 ], fluid=True)
+
+
+# App Callbacks
+#region
+@app.callback(
+    Output('data-tiles', 'children'),
+    [Input('mean-median-toggle', 'value')]
+)
+def update_tiles(mean_median):
+    return get_tiles(combined_df, mean_median)
 
 @app.callback(
     Output('trend-chart', 'children'),
@@ -77,7 +90,7 @@ def update_chart(n3m, n6m, n1y, n3y, nall, mean_median):
         filtered = combined_df[combined_df['date'] >= start_date]
     
     return get_line_chart(filtered, start_date, mean_median)
-
+#endregion
 
 if __name__ == '__main__':
     app.run_server(debug=True) 
