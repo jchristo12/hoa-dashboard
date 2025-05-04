@@ -8,7 +8,7 @@ community_df = pd.read_csv('gs://home_values/stt_values.csv', parse_dates=['date
 
 #TODO: Convert to Zillow API call
 # Read in dummy data
-zillow_df = pd.read_csv('support/dummyData.csv', parse_dates=['date'])
+zillow_df = pd.read_csv('gs://home_values/dummyData.csv', parse_dates=['date'])
 
 # Combine community and zillow data
 combined_df = pd.merge(community_df, zillow_df, on='date', how='left')
