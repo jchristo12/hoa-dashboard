@@ -8,50 +8,76 @@ from data import START_DATE_DEFAULT, combined_df
 from utils import GEO, get_date_ranges, get_line_chart, get_tiles
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 # Expose server for production deployment
 server = app.server
 
 
 app.layout = dbc.Container([
-    html.H2(f'{GEO.get('community')} HOA Dashboard'),
-    html.H4('Property Value Trends'),
-    html.Div(
-        dcc.RadioItems(
-            id='mean-median-toggle',
-            options=[
-                {'label': 'Mean', 'value': 'avg'},
-                {'label': 'Median', 'value': 'median'}
-            ],
-            value='avg',
-            inline=True,
-            inputStyle={'marginRight': '6px', 'marginLeft': '12px'},
-            labelStyle={'marginRight': '18px'},
-            style={'marginBottom': '10px'}
-        ),
-        style={'display': 'flex', 'justifyContent': 'left', 'marginBottom': '10px'}
-    ),
-    html.Div(id='data-tiles'),  # Tiles will be rendered here
-    html.Div(
-        dbc.ButtonGroup([
-            dbc.Button('3M', id='btn-3M', n_clicks=0),
-            dbc.Button('6M', id='btn-6M', n_clicks=0),
-            dbc.Button('1Y', id='btn-1Y', n_clicks=0),
-            dbc.Button('3Y', id='btn-3Y', n_clicks=0),
-            dbc.Button('ALL', id='btn-ALL', n_clicks=0),
-        ], className='mb-3', id='date-range-buttons'),
-        style={'display': 'flex', 'justifyContent': 'center', 'marginBottom': '10px'}
-    ),
-    html.Div(id='trend-chart'),
-    html.Div(
-        'Note: All values are indexed to 100 as of August 1, 2021 representing changes in average home values over time.',
-        style={'fontSize': '0.9em', 'color': '#888', 'marginTop': '1px'}
-    ),
+    dbc.Row([
+        # Sidebar
+        dbc.Col([
+            html.Div([
+                html.H5('Sections', className='text-white', style={'padding': '16px 0 8px 0'}),
+                dbc.Nav([
+                    dbc.NavLink('Property Value Trends', href='/trends', id='tab-trends', active=True, className='mb-2'),
+                    # Add more tabs here as needed
+                ], vertical=True, pills=True),
+            ], style={'height': '100vh', 'backgroundColor': '#222b3a', 'padding': '24px', 'minWidth': '220px'}),
+        ], width='auto', style={'padding': '0', 'backgroundColor': '#222b3a'}),
+        # Main content
+        dbc.Col([
+            html.H1('SkyTerrace Towns HOA Dashboard', style={'marginTop': '16px', 'marginBottom': '24px'}),
+            html.Div(id='tab-content', style={'backgroundColor': '#f8f9fa', 'minHeight': '100vh', 'padding': '32px 24px'}),
+        ], style={'padding': '0'}),
+    ], style={'margin': '0', 'width': '100%'})
 ], fluid=True)
 
 
 # App Callbacks
 #region
+@app.callback(
+    Output('tab-content', 'children'),
+    [Input('tab-trends', 'active')]
+)
+def render_tab_content(trends_active):
+    if trends_active:
+        return [
+            html.H2('Property Value Trends'),
+            html.Div(
+                dcc.RadioItems(
+                    id='mean-median-toggle',
+                    options=[
+                        {'label': 'Mean', 'value': 'avg'},
+                        {'label': 'Median', 'value': 'median'}
+                    ],
+                    value='avg',
+                    inline=True,
+                    inputStyle={'marginRight': '6px', 'marginLeft': '12px'},
+                    labelStyle={'marginRight': '18px'},
+                    style={'marginBottom': '10px'}
+                ),
+                style={'display': 'flex', 'justifyContent': 'center', 'marginBottom': '10px'}
+            ),
+            html.Div(id='data-tiles'),
+            html.Div(
+                dbc.ButtonGroup([
+                    dbc.Button('3M', id='btn-3M', n_clicks=0),
+                    dbc.Button('6M', id='btn-6M', n_clicks=0),
+                    dbc.Button('1Y', id='btn-1Y', n_clicks=0),
+                    dbc.Button('3Y', id='btn-3Y', n_clicks=0),
+                    dbc.Button('ALL', id='btn-ALL', n_clicks=0),
+                ], className='mb-3', id='date-range-buttons'),
+                style={'display': 'flex', 'justifyContent': 'center', 'marginBottom': '10px'}
+            ),
+            html.Div(id='trend-chart'),
+            html.Div(
+                'Note: All values are indexed to 100 as of August 1, 2021 representing changes in average home values over time.',
+                style={'fontSize': '0.9em', 'color': '#888', 'marginTop': '10px'}
+            ),
+        ]
+    return html.Div()
+
 @app.callback(
     Output('data-tiles', 'children'),
     [Input('mean-median-toggle', 'value')]
